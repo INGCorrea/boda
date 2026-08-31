@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+/.vscode/
+/.DS_Store
+*.log
+/.firebase/
+/.cache/
+env.local
+.env
+.env.*
+.idea/
+scripts/push_to_github.ps1

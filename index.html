@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Bris & Aldo · Nuestra boda</title>
+<meta name="description" content="Sube tus fotos de la boda de Bris y Aldo — aparecen al instante en la línea de tiempo.">
+
+<!-- Google Fonts: un serif con carácter para los títulos, un sans limpio para el resto -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow" id="hero-date">Nuestra boda</p>
+    <h1 class="hero-title">Bris <span class="amp">&amp;</span> Aldo</h1>
+    <p class="hero-sub">Toma una foto, súbela, y listo. Aparece aquí para todos, con la hora y el lugar.</p>
+    <a href="#subir" class="hero-cta">Subir una foto</a>
+  </div>
+</header>
+
+<!-- ============ UPLOAD ============ -->
+<section class="upload" id="subir">
+  <div class="upload-card">
+    <h2>Sube tu foto</h2>
+    <p class="upload-hint">Solo dos pasos. Puedes subir varias, una por una.</p>
+
+    <form id="upload-form">
+      <label class="field file-field" id="file-label">
+        <input type="file" id="photo-input" accept="image/*,video/*" capture="environment" required>
+        <span class="file-face">
+          <span class="file-face-icon">＋</span>
+          <span class="file-face-text">Toca aquí para elegir o tomar una foto</span>
+        </span>
+      </label>
+
+      <div class="preview-wrap" id="preview-wrap" hidden>
+        <img id="preview-img" alt="Vista previa" hidden>
+        <video id="preview-video" controls playsinline hidden></video>
+      </div>
+
+      <label class="field">
+        <span>Tu nombre (opcional)</span>
+        <input type="text" id="guest-name" placeholder="¿Quién eres?" maxlength="40" autocomplete="name">
+      </label>
+
+      <progress id="upload-progress" value="0" max="100" hidden></progress>
+
+      <button type="submit" id="submit-btn" class="submit-btn">Subir foto</button>
+      <p class="status" id="status"></p>
+    </form>
+  </div>
+</section>
+
+<!-- ============ TIMELINE ============ -->
+<section class="timeline-section">
+  <h2 class="timeline-title">La línea de tiempo</h2>
+  <p class="timeline-empty" id="timeline-empty">Todavía no hay fotos. ¡Sé la primera persona en subir una!</p>
+  <div class="timeline" id="timeline"></div>
+</section>
+
+<footer class="site-footer">
+  <p>Con cariño, Bris &amp; Aldo</p>
+</footer>
+
+<!-- Carga el script principal como módulo (usando Firebase modular JS) -->
+<script type="module" src="app.js"></script>
+</body>
+</html>
