@@ -221,18 +221,29 @@ async function subirFotoYDatos(file, ubicacion) {
     const nombreArchivo = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const sRef = storageRef(storage, `fotos/${nombreArchivo}`);
 
-    // Subida simple (uploadBytes) para evitar problemas con bloqueadores
-    try {
-      setStatus("Subiendo el archivo...", "");
-      await uploadBytes(sRef, blob, { contentType: mime });
-    } catch (uploadErr) {
-      console.error("Error detectado en la subida:", uploadErr);
-      alert(
-        "¡Ups! Parece que tu navegador o un bloqueador de red (Ad-blocker) impidió subir la foto. \n\n" +
-          "Por favor, desactiva temporalmente el bloqueador de anuncios o intenta usar tus datos móviles para poder compartir tu foto. 📸"
+    // Subida con progreso (uploadBytesResumable maneja mejor CORS)
+    const uploadTask = uploadBytesResumable(sRef, blob, { contentType: mime });
+
+    await new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snap) => {
+          const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+          progressEl.hidden = false;
+          progressEl.value = pct;
+          setStatus(`Subiendo tu archivo… ${pct}%`, "");
+        },
+        (err) => {
+          console.error("Error detectado en la subida:", err);
+          alert(
+            "¡Ups! Parece que tu navegador o un bloqueador de red (Ad-blocker) impidió subir la foto. \n\n" +
+              "Por favor, desactiva temporalmente el bloqueador de anuncios o intenta usar tus datos móviles para poder compartir tu foto. 📸"
+          );
+          reject(err);
+        },
+        () => resolve()
       );
-      return; // Salimos para que el finally limpie la UI
-    }
+    });
 
     const url = await getDownloadURL(sRef);
 
