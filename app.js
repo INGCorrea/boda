@@ -29,13 +29,15 @@ import {
   onSnapshot,
   addDoc,
   serverTimestamp,
+  deleteDoc,
+  doc,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 import {
   getStorage,
   ref as storageRef,
   uploadBytesResumable,
-  uploadBytes,
   getDownloadURL,
+  deleteObject,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js";
 
 const app = initializeApp(firebaseConfig);
@@ -384,7 +386,7 @@ onSnapshot(
 
     snapshot.forEach((doc) => {
       const data = doc.data();
-      timelineEl.appendChild(crearTarjeta(data));
+      timelineEl.appendChild(crearTarjeta(data, doc.id));
     });
   },
   (err) => {
@@ -393,7 +395,7 @@ onSnapshot(
   }
 );
 
-function crearTarjeta(data) {
+function crearTarjeta(data, docId) {
   const item = document.createElement("article");
   item.className = "timeline-item";
 
@@ -429,14 +431,48 @@ function crearTarjeta(data) {
     mediaEl = document.createElement("img");
     mediaEl.className = "timeline-photo is-loading";
     mediaEl.alt = `Foto subida por ${data.invitado || "un invitado"}`;
-    mediaEl.loading = "lazy";
     mediaEl.src = data.url;
     mediaEl.onload = () => mediaEl.classList.remove("is-loading");
   }
 
+  // Botón de eliminar
+  const btnEliminar = document.createElement("button");
+  btnEliminar.textContent = "🗑️ Eliminar";
+  btnEliminar.className = "btn-eliminar";
+  btnEliminar.style.cssText = "position: absolute; top: 10px; right: 10px; padding: 5px 10px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; z-index: 10;";
+  btnEliminar.onclick = () => eliminarFoto(docId, data.url);
+
+  item.style.position = "relative";
   item.appendChild(meta);
   item.appendChild(mediaEl);
+  item.appendChild(btnEliminar);
   return item;
+}
+
+async function eliminarFoto(docId, urlFoto) {
+  if (!confirm("¿Estás seguro de que deseas eliminar esta foto?")) {
+    return;
+  }
+
+  try {
+    // Eliminar de Firestore
+    await deleteDoc(doc(db, "fotos", docId));
+
+    // Eliminar de Storage
+    try {
+      const path = new URL(urlFoto).pathname.split('/o/')[1].split('?')[0];
+      const decodedPath = decodeURIComponent(path);
+      const sRef = storageRef(storage, decodedPath);
+      await deleteObject(sRef);
+    } catch (e) {
+      console.warn("No se pudo eliminar el archivo de Storage:", e);
+    }
+
+    alert("Foto eliminada correctamente.");
+  } catch (err) {
+    console.error("Error al eliminar:", err);
+    alert("No se pudo eliminar la foto. Intenta de nuevo.");
+  }
 }
 
 function escapeHtml(str) {
