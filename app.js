@@ -12,7 +12,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDTds3WEM1jC8w-KNXQgErOxTRGcLjCzao",
   authDomain: "bodabrisaldo.firebaseapp.com",
   projectId: "bodabrisaldo",
-  storageBucket: "bodabrisaldo.firebasestorage.app",
+  storageBucket: "bodabucket.appspot.com",
   messagingSenderId: "97803090517",
   appId: "1:97803090517:web:5ca80e109d3e7fbc3c72dc",
   measurementId: "G-VPVDL2BMEP"
