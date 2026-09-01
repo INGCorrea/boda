@@ -41,7 +41,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-storage.js";
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getFirestore(app, "bodabase");
 const storage = getStorage(app);
 
 const form = document.getElementById("upload-form");
