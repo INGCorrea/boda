@@ -44,6 +44,11 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, "bodabase");
 const storage = getStorage(app);
 
+const MASTER_KEY = "BODA2026";
+const MASTER_STORAGE_KEY = "boda-master-key";
+let masterUnlocked = sessionStorage.getItem(MASTER_STORAGE_KEY) === "1";
+let lastSnapshotDocs = [];
+
 const form = document.getElementById("upload-form");
 const fileInput = document.getElementById("photo-input");
 const nameInput = document.getElementById("guest-name");
@@ -56,6 +61,48 @@ const timelineEl = document.getElementById("timeline");
 const timelineEmptyEl = document.getElementById("timeline-empty");
 const autoUploadCheckbox = document.getElementById("auto-upload");
 const progressEl = document.getElementById("upload-progress");
+const masterToggleBtn = document.getElementById("master-toggle");
+
+function isMasterMode() {
+  return masterUnlocked;
+}
+
+function updateMasterButtonState() {
+  if (!masterToggleBtn) return;
+  masterToggleBtn.classList.toggle("is-active", isMasterMode());
+  masterToggleBtn.textContent = isMasterMode() ? "Modo maestro ON" : "Modo maestro";
+}
+
+function toggleMasterMode() {
+  if (isMasterMode()) {
+    masterUnlocked = false;
+    sessionStorage.removeItem(MASTER_STORAGE_KEY);
+    updateMasterButtonState();
+    renderTimelineFromDocs(lastSnapshotDocs);
+    setStatus("Modo maestro desactivado.", "");
+    return;
+  }
+
+  const enteredKey = prompt("Ingresa la llave maestra para activar el modo de eliminación:");
+  if (enteredKey === null) return;
+
+  if (enteredKey.trim() === MASTER_KEY) {
+    masterUnlocked = true;
+    sessionStorage.setItem(MASTER_STORAGE_KEY, "1");
+    updateMasterButtonState();
+    renderTimelineFromDocs(lastSnapshotDocs);
+    setStatus("Modo maestro activado.", "is-ok");
+    return;
+  }
+
+  alert("Llave incorrecta.");
+}
+
+if (masterToggleBtn) {
+  masterToggleBtn.addEventListener("click", toggleMasterMode);
+  updateMasterButtonState();
+}
+
 // Compresión cliente para videos grandes (sin costo de terceros)
 const MAX_VIDEO_MB = 150; // umbral por defecto para comprimir (150 MB permite ~30s sin compresión en la mayoría de casos)
 const MAX_VIDEO_SIZE = MAX_VIDEO_MB * 1024 * 1024;
@@ -372,22 +419,28 @@ const formateador = new Intl.DateTimeFormat("es-MX", {
   minute: "2-digit",
 });
 
+function renderTimelineFromDocs(docs) {
+  timelineEl.innerHTML = "";
+
+  if (!docs || docs.length === 0) {
+    timelineEmptyEl.hidden = false;
+    return;
+  }
+
+  timelineEmptyEl.hidden = true;
+
+  docs.forEach((docSnap) => {
+    const data = docSnap.data();
+    timelineEl.appendChild(crearTarjeta(data, docSnap.id));
+  });
+}
+
 const fotosQuery = query(collection(db, "fotos"), orderBy("creado", "desc"));
 onSnapshot(
   fotosQuery,
   (snapshot) => {
-    timelineEl.innerHTML = "";
-
-    if (snapshot.empty) {
-      timelineEmptyEl.hidden = false;
-      return;
-    }
-    timelineEmptyEl.hidden = true;
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      timelineEl.appendChild(crearTarjeta(data, doc.id));
-    });
+    lastSnapshotDocs = snapshot.docs;
+    renderTimelineFromDocs(snapshot.docs);
   },
   (err) => {
     console.error(err);
@@ -435,17 +488,18 @@ function crearTarjeta(data, docId) {
     mediaEl.onload = () => mediaEl.classList.remove("is-loading");
   }
 
-  // Botón de eliminar
-  const btnEliminar = document.createElement("button");
-  btnEliminar.textContent = "🗑️ Eliminar";
-  btnEliminar.className = "btn-eliminar";
-  btnEliminar.style.cssText = "position: absolute; top: 10px; right: 10px; padding: 5px 10px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; z-index: 10;";
-  btnEliminar.onclick = () => eliminarFoto(docId, data.url);
+  if (isMasterMode()) {
+    const btnEliminar = document.createElement("button");
+    btnEliminar.textContent = "🗑️ Eliminar";
+    btnEliminar.className = "btn-eliminar";
+    btnEliminar.style.cssText = "position: absolute; top: 10px; right: 10px; padding: 5px 10px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; z-index: 10;";
+    btnEliminar.onclick = () => eliminarFoto(docId, data.url);
+    item.appendChild(btnEliminar);
+  }
 
   item.style.position = "relative";
   item.appendChild(meta);
   item.appendChild(mediaEl);
-  item.appendChild(btnEliminar);
   return item;
 }
 
